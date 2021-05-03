@@ -1,11 +1,17 @@
 <script>
   import { createEventDispatcher } from "svelte";
+  import { focusOnInit, selectOnFocus } from "../actions.js";
   const dispatch = createEventDispatcher();
   export let todo;
+  let nameEl;
   let editing = false; // track editing mode
   let name = todo.name; // hold the name of the todo being edited
+  let editButtonPressed = false; // track if edit button has been pressed, to give focus to it after cancel or save
+
+  const focusEditButton = (node) => editButtonPressed && node.focus();
 
   function onEdit() {
+    editButtonPressed = true;
     editing = true; // enter editing mode
   }
   function onCancel() {
@@ -41,6 +47,9 @@
           >New name for '{todo.name}'</label
         >
         <input
+          use:focusOnInit
+          use:selectOnFocus
+          bind:this={nameEl}
           bind:value={name}
           type="text"
           id="todo-{todo.id}"
@@ -75,7 +84,7 @@
       </label>
     </div>
     <div class="btn-group">
-      <button type="button" class="btn" on:click={onEdit}>
+      <button type="button" class="btn" use:focusEditButton on:click={onEdit}>
         Edit
         <span class="visually-hidden">{todo.name}</span>
       </button>

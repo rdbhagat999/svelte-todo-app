@@ -1,30 +1,23 @@
 <script>
   import FilterButton from "./FilterButton.svelte";
+  import NewTodo from "./NewTodo.svelte";
   import Todo from "./Todo.svelte";
+  import TodosStatus from "./TodosStatus.svelte";
+  import MoreActions from "./MoreActions.svelte";
   export let todos = [];
-  let newTodoName = "";
   let newTodoId;
   let filter = "all";
+  let todosStatus;
 
-  $: totalTodos = todos.length;
-  $: completedTodos = todos.filter((todo) => todo.completed).length;
-  $: {
-    if (totalTodos === 0) {
-      newTodoId = 1;
-    } else {
-      newTodoId = Math.max(...todos.map((t) => t.id)) + 1;
-    }
-  }
-  $: console.log("newTodoName: ", newTodoName);
+  $: newTodoId = todos.length ? Math.max(...todos.map((t) => t.id)) + 1 : 1;
 
-  function addTodo() {
+  function addTodo(name) {
     const newTodo = {
       id: newTodoId,
-      name: newTodoName,
+      name: name,
       completed: false,
     };
     todos = [...todos, newTodo];
-    newTodoName = "";
   }
   function updateTodo(todo) {
     const i = todos.findIndex((t) => t.id === todo.id);
@@ -32,6 +25,7 @@
   }
   function removeTodo(todo) {
     todos = todos.filter((t) => t.id !== todo.id);
+    todosStatus.focus();
   }
   const filterTodos = (filter, todos) => {
     if (filter === "active") {
@@ -41,6 +35,10 @@
     }
     return todos;
   };
+  const checkAllTodos = (completed) =>
+    (todos = todos.map((t) => ({ ...t, completed })));
+  const removeCompletedTodos = () =>
+    (todos = todos.filter((t) => !t.completed));
 </script>
 
 <!-- <h1>Svelte To-Do list</h1> -->
@@ -48,29 +46,13 @@
 <!-- Todos.svelte -->
 <div class="todoapp stack-large">
   <!-- NewTodo -->
-  <form on:submit|preventDefault={addTodo}>
-    <h2 class="label-wrapper">
-      <label for="todo-0" class="label__lg"> What needs to be done? </label>
-    </h2>
-    <input
-      type="text"
-      id="todo-0"
-      autocomplete="off"
-      class="input input__lg"
-      bind:value={newTodoName}
-    />
-    <button type="submit" disabled="" class="btn btn__primary btn__lg">
-      Add
-    </button>
-  </form>
+  <NewTodo on:addTodo={(e) => addTodo(e.detail)} />
 
   <!-- Filter -->
   <FilterButton bind:filter />
 
   <!-- TodosStatus -->
-  <h2 id="list-heading">
-    {completedTodos} out of {totalTodos} items completed
-  </h2>
+  <TodosStatus bind:this={todosStatus} {todos} />
 
   <!-- Todos -->
   <ul role="list" class="todo-list stack-large" aria-labelledby="list-heading">
@@ -91,8 +73,9 @@
   <hr />
 
   <!-- MoreActions -->
-  <div class="btn-group">
-    <button type="button" class="btn btn__primary">Check all</button>
-    <button type="button" class="btn btn__primary">Remove completed</button>
-  </div>
+  <MoreActions
+    {todos}
+    on:checkAll={(e) => checkAllTodos(e.detail)}
+    on:removeCompleted={removeCompletedTodos}
+  />
 </div>
